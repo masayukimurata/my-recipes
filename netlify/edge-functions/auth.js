@@ -1,8 +1,9 @@
 export default async (request, context) => {
   const auth = request.headers.get("Authorization");
   
-  // ユーザー名: admin / パスワード: murata1234
-  const expectedAuth = "Basic " + btoa("admin:murata1234");
+  // Netlifyの「金庫」からパスワードを読み出す設定
+  const password = Netlify.env.get("SECRET_PASSWORD");
+  const expectedAuth = "Basic " + btoa("admin:" + password);
 
   if (auth !== expectedAuth) {
     return new Response("Unauthorized", {
