@@ -1,12 +1,12 @@
+// 一時的なテスト用コード（auth.jsをこれで上書きしてpush）
 export default async (request, context) => {
   const auth = request.headers.get("Authorization");
   
-  // Netlifyの「金庫」からパスワードを読み出す設定
-  const password = Netlify.env.get("SECRET_PASSWORD");
-  const expectedAuth = "Basic " + btoa("admin:" + password);
+  // 直接値を指定してテスト
+  const expectedAuth = "Basic " + btoa("admin:murata1234"); // 仮のパスワード
 
   if (auth !== expectedAuth) {
-    return new Response("Unauthorized", {
+    return new Response(`Your Header: ${auth}`, { // 送られてきたヘッダーを返す
       status: 401,
       headers: { "WWW-Authenticate": 'Basic realm="Secure Recipe"' },
     });
