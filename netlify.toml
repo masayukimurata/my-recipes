@@ -1,3 +1,7 @@
 [[edge_functions]]
   path = "/*"
   function = "auth"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundle = true
