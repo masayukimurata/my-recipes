@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Monnbann Recipe Hub</title>
+    
+    {# --- Recipe Keeper インポート用の構造化データを生成 --- #}
+    {% for r_id, recipe in recipes.items() %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org/",
+      "@type": "Recipe",
+      "name": "{{ recipe.r_name }}",
+      "recipeCategory": "{{ recipe.category }}",
+      "recipeYield": "{{ recipe.serving_size }}",
+      "recipeIngredient": [
+        {% for ing in recipe.ingredients %}
+        "{{ ing.m_name }} {{ "{:g}".format(ing.usage_amount) }}{{ ing.base_unit }} (単価: ¥{{ "%.2f"|format(ing.unit_price) }})"{{ "," if not loop.last }}
+        {% endfor %}
+      ],
+      "recipeInstructions": [
+        {
+          "@type": "HowToStep",
+          "text": "{{ recipe.remarks | replace('\n', ' ') | truncate(100) if recipe.remarks else '手順はRecipe Hub本体を参照してください。' }}"
+        }
+      ],
+      "totalCost": "¥{{ "{:,.0f}".format(recipe.total_cost) }}",
+      "identifier": "{{ r_id }}"
+    }
+    </script>
+    {% endfor %}
+    {# ------------------------------------------------ #}
+
+    <style>
+        /* --- 以前いただいた素晴らしいスタイルを継承 --- */
+        :root { --primary: #2c3e50; --accent: #e67e22; --bg: #f4f7f6; --text: #333; --cost-color: #27ae60; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 850px; margin: auto; }
+        header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        header h1 { margin: 0; font-size: 2rem; color: var(--primary); }
+        .recipe-card { background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 50px; overflow: hidden; }
+        .recipe-header { background: var(--primary); color: white; padding: 25px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .recipe-title { margin: 0; font-size: 1.7rem; }
+        .total-cost-badge { background: var(--accent); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.1rem; }
+        .recipe-body { padding: 30px; }
+        .recipe-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; font-size: 0.9rem; color: #666; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .meta-item { display: flex; align-items: center; }
+        .meta-label { font-weight: bold; margin-right: 5px; color: #999; }
+        .section-title { font-size: 1.3rem; border-left: 5px solid var(--accent); padding-left: 12px; margin: 30px 0 15px 0; }
+        .ingredient-list { list-style: none; padding: 0; }
+        .ingredient-item { background: #f9f9f9; padding: 12px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; margin-bottom: 8px; }
+        .ingredient-info { display: flex; flex-direction: column; }
+        .name { font-weight: bold; color: var(--primary); }
+        .unit-info { font-size: 0.75rem; color: #888; }
+        .cost-info { text-align: right; }
+        .amount { font-weight: bold; color: var(--primary); font-size: 1.1rem; }
+        .line-cost { display: block; font-size: 0.85rem; color: var(--cost-color); font-weight: bold; }
+        .instructions { background: #fffcf0; padding: 25px; border-radius: 10px; border: 1px solid #f1e4bc; white-space: pre-wrap; font-size: 1.05rem; }
+        .footer-meta { margin-top: 20px; padding-top: 15px; border-top: 1px dotted #ccc; font-size: 0.8rem; color: #999; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Monnbann レシピ管理システム</h1>
+        </header>
+
+        {% for r_id, recipe in recipes.items() %}
+        <article class="recipe-card h-recipe">
+            <div class="recipe-header">
+                <h2 class="recipe-title p-name">{{ recipe.r_name }}</h2>
+                <div class="total-cost-badge">¥{{ "{:,.0f}".format(recipe.total_cost) }}</div>
+            </div>
+
+            <div class="recipe-body">
+                <div class="recipe-meta">
+                    <span class="meta-item">📁 ID: {{ r_id }}</span>
+                    <span class="meta-item p-category"><span class="meta-label">種別:</span> {{ recipe.category or "未設定" }}</span>
+                    <span class="meta-item p-course"><span class="meta-label">コース:</span> {{ recipe.course or "未設定" }}</span>
+                    <span class="meta-item p-yield"><span class="meta-label">分量:</span> {{ recipe.serving_size or "未設定" }}</span>
+                </div>
+
+                <h3 class="section-title">材料・構成原価</h3>
+                <ul class="ingredient-list">
+                    {% for ing in recipe.ingredients %}
+                    <li class="ingredient-item p-ingredient">
+                        <div class="ingredient-info">
+                            <span class="name">{{ ing.m_name }}</span>
+                            <span class="unit-info">単価: ¥{{ "{:,.2f}".format(ing.unit_price) }} / {{ ing.base_unit }}</span>
+                        </div>
+                        <div class="cost-info">
+                            <span class="amount">
+                                {{ "{:g}".format(ing.usage_amount) }}
+                                <span class="unit" style="font-size: 0.8rem; color: #777;">{{ ing.base_unit }}</span>
+                            </span>
+                            <span class="line-cost">小計: ¥{{ "{:,.0f}".format(ing.line_cost) }}</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <h3 class="section-title">手順・備考</h3>
+                <div class="instructions e-instructions">
+                    {{ recipe.remarks or "手順はまだ登録されていません。" }}
+                </div>
+
+                <div class="footer-meta">
+                    計算エンジン: Murata Recipe Engine v1.0 | 計算日時: {{ now }}
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</body>
+</html>
